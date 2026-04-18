@@ -52,13 +52,51 @@ export default function VideoPlayer({ video, onBack }: { video: Video, onBack: (
 
   const handleShare = () => {
     // Generate the Telegram Mini App deep link
-    // Ensure backticks (`) are used here
     const tgDeepLink = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=vid_${video.id}`;
     
-    navigator.clipboard.writeText(tgDeepLink).then(() => {
+    const tg = (window as any).Telegram?.WebApp;
+    
+    // If inside Telegram, use native share dialog
+    if (tg && tg.openTelegramLink) {
+      const shareText = encodeURIComponent(`Watch this viral video! 🎬`);
+      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(tgDeepLink)}&text=${shareText}`;
+      tg.openTelegramLink(shareUrl);
+      
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
-    });
+      return;
+    }
+
+    // Fallback logic for web browsers
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(tgDeepLink)
+        .then(() => {
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 2000);
+        })
+        .catch(() => fallbackCopyTextToClipboard(tgDeepLink));
+    } else {
+      fallbackCopyTextToClipboard(tgDeepLink);
+    }
+  };
+
+  const fallbackCopyTextToClipboard = (text: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";  // Avoid scrolling to bottom
+    textArea.style.opacity = "0";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error('Fallback copy failed', err);
+      alert(`Please copy this link manually:\n\n${text}`);
+    }
+    document.body.removeChild(textArea);
   };
 
   return (
