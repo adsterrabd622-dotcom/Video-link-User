@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import VideoCard from './components/VideoCard';
 import VideoPlayer from './components/VideoPlayer';
-import { Video } from './data/videos';
+import { Video, videos as defaultVideos } from './data/videos';
 import { Search, PlayCircle, X, User } from 'lucide-react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from './lib/firebase';
@@ -28,9 +28,24 @@ export default function App() {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
   
   const hasProcessedDeepLink = useRef(false);
   const tgUser = getTgUser();
+
+  const handleDeepLink = (vids: Video[]) => {
+    if (!hasProcessedDeepLink.current && vids.length > 0) {
+      const param = checkStartParam();
+      if (param && param.startsWith('vid_')) {
+        const videoId = param.replace('vid_', '');
+        const foundVideo = vids.find(v => v.id === videoId);
+        if (foundVideo) {
+          setSelectedVideo(foundVideo);
+          hasProcessedDeepLink.current = true;
+        }
+      }
+    }
+  };
 
   useEffect(() => {
     if ((window as any).Telegram?.WebApp) {
@@ -38,30 +53,32 @@ export default function App() {
       (window as any).Telegram.WebApp.expand();
     }
 
-    const unsub = onSnapshot(collection(db, 'videos'), (snap) => {
-      const vids: Video[] = [];
-      snap.forEach(doc => {
-        vids.push({ id: doc.id, ...doc.data() } as Video);
+    try {
+      const unsub = onSnapshot(collection(db, 'videos'), (snap) => {
+        const vids: Video[] = [];
+        snap.forEach(doc => {
+          vids.push({ id: doc.id, ...doc.data() } as Video);
+        });
+        
+        // Use default videos if firestore is empty
+        const finalVideos = vids.length > 0 ? vids : defaultVideos;
+        setVideos(finalVideos);
+        setLoading(false);
+        handleDeepLink(finalVideos);
+      }, (error) => {
+        console.error("Firestore error, falling back to local data:", error);
+        setVideos(defaultVideos);
+        setLoading(false);
+        handleDeepLink(defaultVideos);
       });
-      setVideos(vids);
-      setLoading(false);
       
-      // ডিপ লিংক চেক করা
-      if (!hasProcessedDeepLink.current && vids.length > 0) {
-        const param = checkStartParam();
-        if (param && param.startsWith('vid_')) {
-          const videoId = param.replace('vid_', '');
-          const foundVideo = vids.find(v => v.id === videoId);
-          if (foundVideo) {
-            // যদি ভিডিও পাওয়া যায়, সোজা ভিডিও পেজে পাঠিয়ে দেবে
-            setSelectedVideo(foundVideo);
-            hasProcessedDeepLink.current = true;
-          }
-        }
-      }
-    });
-    
-    return () => unsub();
+      return () => unsub();
+    } catch (err) {
+      console.error("Firestore initialization error:", err);
+      setVideos(defaultVideos);
+      setLoading(false);
+      handleDeepLink(defaultVideos);
+    }
   }, []);
 
   const filteredVideos = videos.filter(v => 
@@ -69,66 +86,110 @@ export default function App() {
     v.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // যদি selectedVideo থাকে, তাহলে শুধুমাত্র VideoPlayer দেখাবে (হোম পেজ নয়)
   if (selectedVideo) {
-    return (
-      <VideoPlayer 
-        video={selectedVideo} 
-        onBack={() => {
-          setSelectedVideo(null); // ব্যাক করলে আবার হোম পেজে আসবে
-        }} 
-      />
-    );
+    return <VideoPlayer video={selectedVideo} onBack={() => setSelectedVideo(null)} />;
   }
 
-  // যদি ভিডিও সিলেক্ট করা না থাকে, তাহলে রেগুলার হোম পেজ দেখাবে
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 font-sans pb-20 md:pb-0">
-      <nav className="fixed top-0 w-full z-40 bg-slate-900/80 backdrop-blur-md border-b border-white/5 px-4 md:px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <PlayCircle className="w-8 h-8 text-indigo-500" />
-          <span className="text-xl font-black tracking-tighter text-white">VIRAL <span className="text-indigo-500">VIDEO</span></span>
+    <div className="min-h-screen bg-[#0f172a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-950 to-slate-950 text-slate-100 font-sans pb-20 md:pb-0">
+      {/* Glass Navbar */}
+      <nav className="fixed top-0 w-full z-40 bg-slate-900/50 backdrop-blur-md border-b border-white/5 px-4 md:px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-indigo-400 uppercase relative z-10">
+          <PlayCircle className="w-6 h-6 md:w-8 md:h-8 shrink-0" />
+          <span className="text-lg md:text-2xl font-black tracking-tighter text-white whitespace-nowrap">VIRAL <span className="text-indigo-500">VIDEO</span></span>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4 text-slate-400">
+          {/* Search */}
           {isSearchOpen ? (
-            <div className="flex items-center bg-slate-800 rounded-full px-3 py-1.5 border border-white/10">
+            <div className="flex items-center gap-1 md:gap-2 bg-slate-800/80 rounded-full px-2 py-1.5 md:px-3 border border-white/10 animate-in fade-in slide-in-from-right-4">
+              <Search className="w-4 h-4 text-slate-300 shrink-0" />
               <input 
                 type="text" 
                 placeholder="Search..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent border-none outline-none text-white text-sm w-32 md:w-48"
+                className="bg-transparent border-none outline-none text-white text-sm w-20 sm:w-32 md:w-48 placeholder:text-slate-500"
                 autoFocus
               />
-              <X className="w-4 h-4 cursor-pointer" onClick={() => {setIsSearchOpen(false); setSearchQuery("");}} />
+              <X className="w-4 h-4 shrink-0 cursor-pointer hover:text-white" onClick={() => {setIsSearchOpen(false); setSearchQuery("");}} />
             </div>
           ) : (
-            <Search className="w-5 h-5 cursor-pointer" onClick={() => setIsSearchOpen(true)} />
+            <Search className="w-5 h-5 hover:text-white cursor-pointer transition" onClick={() => setIsSearchOpen(true)} />
           )}
           
-          <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center overflow-hidden">
-              {tgUser.photo_url ? <img src={tgUser.photo_url} alt="P" className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-white" />}
+          <Bell className="w-5 h-5 hover:text-white cursor-pointer transition hidden sm:block" />
+          
+          {/* Profile Icon & Popup */}
+          <div className="relative shrink-0">
+            <div 
+              onClick={() => setShowProfilePopup(!showProfilePopup)}
+              className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 border border-white/10 shadow-lg cursor-pointer flex items-center justify-center overflow-hidden"
+            >
+              {tgUser.photo_url ? (
+                <img src={tgUser.photo_url} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-5 h-5 text-white" />
+              )}
+            </div>
+            
+            {/* Profile Popup Menu */}
+            {showProfilePopup && (
+              <>
+                {/* Invisible backdrop to close popup when clicking outside */}
+                <div className="fixed inset-0 z-40" onClick={() => setShowProfilePopup(false)}></div>
+                <div className="absolute right-0 top-12 w-64 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95">
+                  <div className="flex items-center gap-4 mb-4">
+                     <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 overflow-hidden flex items-center justify-center shrink-0">
+                        {tgUser.photo_url ? (
+                          <img src={tgUser.photo_url} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-6 h-6 text-white" />
+                        )}
+                     </div>
+                     <div className="overflow-hidden">
+                       <h3 className="text-white font-bold truncate">{tgUser.first_name} {tgUser.last_name || ''}</h3>
+                       <p className="text-slate-400 text-sm truncate">@{tgUser.username || 'username'}</p>
+                     </div>
+                  </div>
+                  <div className="bg-slate-800/80 rounded-lg p-3 text-xs text-slate-300 text-center border border-white/5">
+                     Authenticated via Telegram Mini App
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </nav>
 
-      <main className="pt-28 px-4 max-w-7xl mx-auto flex-1">
-        <header className="mb-10">
-          <h1 className="text-3xl font-bold text-white mb-2">Exclusive Content</h1>
-          <p className="text-slate-400">Select a video to unlock premium access.</p>
+      {/* Main Content */}
+      <main className="pt-28 px-4 md:px-10 max-w-7xl mx-auto flex-1">
+        <header className="mb-12 text-center md:text-left">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 animate-fade-in mb-3">
+            Discover Premium Content
+          </h1>
+          <p className="text-slate-400 md:text-lg animate-fade-in">Watch exclusive viral videos by unlocking sponsored content seamlessly.</p>
         </header>
+
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-white">
+            {searchQuery ? `Search Results for "${searchQuery}"` : "Trending Now"}
+          </h2>
+        </div>
 
         {loading ? (
             <div className="text-center py-20 text-indigo-400 font-medium">Loading premium content...</div>
         ) : filteredVideos.length > 0 ? (
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
             {filteredVideos.map(video => (
               <VideoCard key={video.id} video={video} onClick={() => setSelectedVideo(video)} />
             ))}
           </section>
         ) : (
-          <div className="text-center py-20 text-slate-500">No videos found.</div>
+          <div className="text-center py-20 text-slate-500">
+            <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
+            <p>No videos found matching your search.</p>
+          </div>
         )}
       </main>
     </div>
