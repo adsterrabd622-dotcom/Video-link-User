@@ -1,0 +1,6 @@
+{
+  "name": "VideoStreamPro",
+  "description": "A YouTube-inspired video streaming application with Adsgram integrated ad-gating mechanics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

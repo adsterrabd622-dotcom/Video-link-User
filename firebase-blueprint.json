@@ -1,0 +1,23 @@
+{
+  "entities": {
+    "Video": {
+      "title": "Video",
+      "description": "Viral Video Entity",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "duration": { "type": "string" },
+        "description": { "type": "string" },
+        "videoUrl": { "type": "string" }
+      },
+      "required": ["title", "thumbnail", "duration", "description", "videoUrl"]
+    }
+  },
+  "firestore": {
+    "/videos/{videoId}": {
+      "schema": { "$ref": "#/entities/Video" },
+      "description": "List of videos"
+    }
+  }
+}
