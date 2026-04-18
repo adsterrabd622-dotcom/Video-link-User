@@ -51,13 +51,19 @@ export default function VideoPlayer({ video, onBack }: { video: Video, onBack: (
   };
 
   const handleShare = () => {
-    // Generate the Telegram Mini App deep link
-    const tgDeepLink = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=vid_${video.id}`;
+    // Generate a Universal Link (Works in browsers AND Telegram)
+    const currentUrl = window.location.origin + window.location.pathname;
+    const universalLink = `${currentUrl}?startapp=vid_${video.id}`;
+    
+    // Telegram Mini App Deep Link (Optional: only use if Bot Username is set)
+    const tgDeepLink = BOT_USERNAME !== "VIRAL_LINK_VIDEO_HUB_BOT" 
+       ? `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=vid_${video.id}`
+       : universalLink; // Fallback to universal link if bot isn't configured
     
     const tg = (window as any).Telegram?.WebApp;
     
     // If inside Telegram, use native share dialog
-    if (tg && tg.openTelegramLink) {
+    if (tg && tg.openTelegramLink && BOT_USERNAME !== "VIRAL_LINK_VIDEO_HUB_BOT") {
       const shareText = encodeURIComponent(`Watch this viral video! 🎬`);
       const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(tgDeepLink)}&text=${shareText}`;
       tg.openTelegramLink(shareUrl);
@@ -68,7 +74,7 @@ export default function VideoPlayer({ video, onBack }: { video: Video, onBack: (
     }
 
     // Fallback logic for web browsers
-    if (navigator.clipboard && window.isSecureContext) {
+    if (navigator.clipboard) {
       navigator.clipboard.writeText(tgDeepLink)
         .then(() => {
           setIsCopied(true);
