@@ -5,14 +5,16 @@ import { Video, videos as defaultVideos } from './data/videos';
 import { Search, Bell, PlayCircle, X, User } from 'lucide-react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from './lib/firebase';
+import { showAdsgramAd } from './lib/adsgram';
 
-// Helper to get Telegram User
+// Add your Adsgram block ID here for the APP OPEN ad
+const APP_OPEN_ADS_BLOCK_ID = "YOUR_ADSGRAM_BLOCK_ID";
+
 const getTgUser = () => {
   const tg = (window as any).Telegram?.WebApp;
   return tg?.initDataUnsafe?.user || { first_name: "User", username: "user", photo_url: "" };
 };
 
-// Helper to get Start Parameter (Deep Link)
 const checkStartParam = () => {
   const tg = (window as any).Telegram?.WebApp;
   let param = tg?.initDataUnsafe?.start_param;
@@ -31,6 +33,8 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const [appOpenAdWatched, setAppOpenAdWatched] = useState(false);
+  const [showingAppOpenAd, setShowingAppOpenAd] = useState(false);
   
   const hasProcessedDeepLink = useRef(false);
   const tgUser = getTgUser();
@@ -54,19 +58,27 @@ export default function App() {
       (window as any).Telegram.WebApp.ready();
       (window as any).Telegram.WebApp.expand();
     }
+    
+    const playOpenAd = async () => {
+      // Show an ad on first load
+      setShowingAppOpenAd(true);
+      await showAdsgramAd(APP_OPEN_ADS_BLOCK_ID);
+      setAppOpenAdWatched(true);
+      setShowingAppOpenAd(false);
+    };
+
+    // Trigger App Open Ad
+    playOpenAd();
 
     try {
-      // Fetch data from Firestore
+      // Query videos but we will reverse them client side since firestore doesn't guarantee creation order without a timestamp field
       const unsub = onSnapshot(collection(db, 'videos'), (snap) => {
         const vids: Video[] = [];
         snap.forEach(doc => {
           vids.push({ id: doc.id, ...doc.data() } as Video);
         });
-        
-        // REVERSE THE ARRAY so newest documents show first
         vids.reverse();
         
-        // Use default videos if firestore is empty
         const finalVideos = vids.length > 0 ? vids : [...defaultVideos].reverse();
         setVideos(finalVideos);
         setLoading(false);
@@ -93,6 +105,17 @@ export default function App() {
     v.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
     v.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // If we are currently showing the app open ad, we can render a loading/ad screen
+  if (showingAppOpenAd && !selectedVideo) {
+    return (
+      <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center text-slate-100 font-sans p-6 text-center">
+        <PlayCircle className="w-16 h-16 text-indigo-500 animate-pulse mb-6" />
+        <h1 className="text-2xl font-bold mb-2">Loading Premium App...</h1>
+        <p className="text-slate-400">Please wait while we prepare an advertisement for you.</p>
+      </div>
+    );
+  }
 
   if (selectedVideo) {
     return <VideoPlayer video={selectedVideo} onBack={() => setSelectedVideo(null)} />;
