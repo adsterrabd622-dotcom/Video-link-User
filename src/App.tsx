@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import VideoCard from './components/VideoCard';
 import VideoPlayer from './components/VideoPlayer';
 import { Video, videos as defaultVideos } from './data/videos';
-import { Search, PlayCircle, X, User } from 'lucide-react';
+import { Search, Bell, PlayCircle, X, User } from 'lucide-react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from './lib/firebase';
 
@@ -60,7 +60,7 @@ export default function App() {
           vids.push({ id: doc.id, ...doc.data() } as Video);
         });
         
-        // Use default videos if firestore is empty
+        // ফায়ারবেস এম্পটি থাকলে লোকাল ডেমো ডাটা দেখাবে 
         const finalVideos = vids.length > 0 ? vids : defaultVideos;
         setVideos(finalVideos);
         setLoading(false);
@@ -92,6 +92,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#0f172a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-950 to-slate-950 text-slate-100 font-sans pb-20 md:pb-0">
+      
       {/* Glass Navbar */}
       <nav className="fixed top-0 w-full z-40 bg-slate-900/50 backdrop-blur-md border-b border-white/5 px-4 md:px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-indigo-400 uppercase relative z-10">
@@ -100,7 +101,7 @@ export default function App() {
         </div>
         
         <div className="flex items-center gap-3 md:gap-4 text-slate-400">
-          {/* Search */}
+          {/* Search Box */}
           {isSearchOpen ? (
             <div className="flex items-center gap-1 md:gap-2 bg-slate-800/80 rounded-full px-2 py-1.5 md:px-3 border border-white/10 animate-in fade-in slide-in-from-right-4">
               <Search className="w-4 h-4 text-slate-300 shrink-0" />
@@ -124,7 +125,7 @@ export default function App() {
           <div className="relative shrink-0">
             <div 
               onClick={() => setShowProfilePopup(!showProfilePopup)}
-              className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 border border-white/10 shadow-lg cursor-pointer flex items-center justify-center overflow-hidden"
+              className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 border border-white/10 shadow-lg cursor-pointer flex items-center justify-center overflow-hidden transition-transform active:scale-95 hover:shadow-indigo-500/50 hover:shadow-lg"
             >
               {tgUser.photo_url ? (
                 <img src={tgUser.photo_url} alt="Profile" className="w-full h-full object-cover" />
@@ -133,10 +134,8 @@ export default function App() {
               )}
             </div>
             
-            {/* Profile Popup Menu */}
             {showProfilePopup && (
               <>
-                {/* Invisible backdrop to close popup when clicking outside */}
                 <div className="fixed inset-0 z-40" onClick={() => setShowProfilePopup(false)}></div>
                 <div className="absolute right-0 top-12 w-64 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95">
                   <div className="flex items-center gap-4 mb-4">
@@ -162,13 +161,15 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Main Content */}
+      {/* Main Home Content */}
       <main className="pt-28 px-4 md:px-10 max-w-7xl mx-auto flex-1">
         <header className="mb-12 text-center md:text-left">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 animate-fade-in mb-3">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 animate-in fade-in slide-in-from-bottom-4 mb-3">
             Discover Premium Content
           </h1>
-          <p className="text-slate-400 md:text-lg animate-fade-in">Watch exclusive viral videos by unlocking sponsored content seamlessly.</p>
+          <p className="text-slate-400 md:text-lg animate-in fade-in slide-in-from-bottom-5">
+            Watch exclusive viral videos by unlocking sponsored content seamlessly.
+          </p>
         </header>
 
         <div className="flex items-center justify-between mb-6">
@@ -178,7 +179,7 @@ export default function App() {
         </div>
 
         {loading ? (
-            <div className="text-center py-20 text-indigo-400 font-medium">Loading premium content...</div>
+            <div className="text-center py-20 text-indigo-400 font-medium animate-pulse">Loading premium content...</div>
         ) : filteredVideos.length > 0 ? (
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
             {filteredVideos.map(video => (
@@ -186,7 +187,7 @@ export default function App() {
             ))}
           </section>
         ) : (
-          <div className="text-center py-20 text-slate-500">
+          <div className="text-center py-20 text-slate-500 flex flex-col items-center">
             <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
             <p>No videos found matching your search.</p>
           </div>
