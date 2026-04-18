@@ -3,14 +3,16 @@ import VideoCard from './components/VideoCard';
 import VideoPlayer from './components/VideoPlayer';
 import { Video, videos as defaultVideos } from './data/videos';
 import { Search, Bell, PlayCircle, X, User } from 'lucide-react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from './lib/firebase';
 
+// Helper to get Telegram User
 const getTgUser = () => {
   const tg = (window as any).Telegram?.WebApp;
   return tg?.initDataUnsafe?.user || { first_name: "User", username: "user", photo_url: "" };
 };
 
+// Helper to get Start Parameter (Deep Link)
 const checkStartParam = () => {
   const tg = (window as any).Telegram?.WebApp;
   let param = tg?.initDataUnsafe?.start_param;
@@ -54,7 +56,7 @@ export default function App() {
     }
 
     try {
-      // Query videos but we will reverse them client side since firestore doesn't guarantee creation order without a timestamp field
+      // Fetch data from Firestore
       const unsub = onSnapshot(collection(db, 'videos'), (snap) => {
         const vids: Video[] = [];
         snap.forEach(doc => {
