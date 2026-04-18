@@ -51,52 +51,14 @@ export default function VideoPlayer({ video, onBack }: { video: Video, onBack: (
   };
 
   const handleShare = () => {
-    // Generate the Telegram Mini App deep link (Strictly t.me link as requested)
+    // Generate the Telegram Mini App deep link
+    // Ensure backticks (`) are used here
     const tgDeepLink = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=vid_${video.id}`;
     
-    const tg = (window as any).Telegram?.WebApp;
-    
-    // If inside Telegram, use native share dialog
-    if (tg && tg.openTelegramLink) {
-      const shareText = encodeURIComponent(`Watch this viral video! 🎬`);
-      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(tgDeepLink)}&text=${shareText}`;
-      tg.openTelegramLink(shareUrl);
-      
+    navigator.clipboard.writeText(tgDeepLink).then(() => {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
-      return;
-    }
-
-    // Fallback logic for web browsers
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(tgDeepLink)
-        .then(() => {
-          setIsCopied(true);
-          setTimeout(() => setIsCopied(false), 2000);
-        })
-        .catch(() => fallbackCopyTextToClipboard(tgDeepLink));
-    } else {
-      fallbackCopyTextToClipboard(tgDeepLink);
-    }
-  };
-
-  const fallbackCopyTextToClipboard = (text: string) => {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    textArea.style.position = "fixed";  // Avoid scrolling to bottom
-    textArea.style.opacity = "0";
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    try {
-      document.execCommand('copy');
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch (err) {
-      console.error('Fallback copy failed', err);
-      alert(`Please copy this link manually:\n\n${text}`);
-    }
-    document.body.removeChild(textArea);
+    });
   };
 
   return (
@@ -134,7 +96,7 @@ export default function VideoPlayer({ video, onBack }: { video: Video, onBack: (
           
           {/* Video Thumbnail in the Card */}
           <div className="relative aspect-video w-full border-b border-white/10">
-            <img src={video.thumbnail} alt={video.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+            <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center">
                <Lock className="w-12 h-12 text-white drop-shadow-lg mb-2" />
                <div className="text-white font-bold tracking-[0.2em] uppercase text-xs px-2 text-center drop-shadow-md">Target URL Locked</div>
