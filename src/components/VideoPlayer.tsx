@@ -5,8 +5,8 @@ import { X, Lock, PlayCircle, ShieldCheck, ExternalLink, Share2, Check } from 'l
 
 // --- আপনার তথ্য এখানে বসান ---
 const ADS_BLOCK_ID = "YOUR_ADSGRAM_BLOCK_ID"; // অ্যাডগ্রাম ব্লক আইডি
-const BOT_USERNAME = "YOUR_BOT_USERNAME";      // টেলিগ্রাম বটের নাম (উদা: MyVideoBot)
-const APP_SHORT_NAME = "APP_NAME";              // অ্যাপের শর্ট নাম (উদা: play)
+const BOT_USERNAME = "@VIRAL_LINK_VIDEO_HUB_BOT";      // টেলিগ্রাম বটের নাম (উদা: MyVideoBot)
+const APP_SHORT_NAME = "VIRAL_LINK_VIDEO_HUB_BOT";              // অ্যাপের শর্ট নাম (উদা: play)
 // ------------------------------
 
 export default function VideoPlayer({ video, onBack }: { video: Video, onBack: () => void }) {
