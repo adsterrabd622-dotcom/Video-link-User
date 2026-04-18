@@ -79,26 +79,20 @@ export default function App() {
         });
         vids.reverse();
         
-        // Use default videos if firestore is empty
-        const finalVideos = vids.length > 0 ? vids : [...defaultVideos].reverse();
-        setVideos(finalVideos);
+        setVideos(vids);
         setLoading(false);
-        handleDeepLink(finalVideos);
+        handleDeepLink(vids);
       }, (error) => {
-        console.error("Firestore error, falling back to local data:", error);
-        const fallback = [...defaultVideos].reverse();
-        setVideos(fallback);
+        console.error("Firestore error:", error);
+        setVideos([]);
         setLoading(false);
-        handleDeepLink(fallback);
       });
       
       return () => unsub();
     } catch (err) {
       console.error("Firestore initialization error:", err);
-      const fallback = [...defaultVideos].reverse();
-      setVideos(fallback);
+      setVideos([]);
       setLoading(false);
-      handleDeepLink(fallback);
     }
   }, []);
 
