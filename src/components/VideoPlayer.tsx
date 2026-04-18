@@ -134,7 +134,7 @@ export default function VideoPlayer({ video, onBack }: { video: Video, onBack: (
           
           {/* Video Thumbnail in the Card */}
           <div className="relative aspect-video w-full border-b border-white/10">
-            <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+            <img src={video.thumbnail} alt={video.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center">
                <Lock className="w-12 h-12 text-white drop-shadow-lg mb-2" />
                <div className="text-white font-bold tracking-[0.2em] uppercase text-xs px-2 text-center drop-shadow-md">Target URL Locked</div>
