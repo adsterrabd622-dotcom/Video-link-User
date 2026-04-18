@@ -1,20 +1,30 @@
-export const initializeAdsgram = (blockId: string) => {
-  console.log(`Initializing Adsgram with Block ID: ${blockId}`);
-};
+// src/lib/adsgram.ts
 
 export const showAdsgramAd = async (blockId: string): Promise<boolean> => {
   return new Promise((resolve) => {
-    const AdController = (window as any).Adsgram?.init({ blockId });
-    if (AdController) {
-      AdController.show()
-        .then(() => resolve(true))
-        .catch((err: any) => {
-          console.error('Ad failed', err);
-          resolve(false);
-        });
-    } else {
-      console.log(`Simulating Ad (SDK missing) for Block ID: ${blockId}`);
-      setTimeout(() => resolve(true), 1500);
+    try {
+      const Adsgram = (window as any).Adsgram;
+      if (Adsgram) {
+        const AdController = Adsgram.init({ blockId: blockId });
+        AdController.show()
+          .then(() => {
+            console.log("User watched the ad completely.");
+            resolve(true);
+          })
+          .catch((err: any) => {
+            console.error('User skipped or ad error', err);
+            // It could be Adblock, or user skipped.
+            // Returning false so they don't get the reward unless they watch it.
+            resolve(false);
+          });
+      } else {
+        console.warn("Adsgram SDK script not loaded correctly.");
+        // Fallback for development/testing if SDK is blocked by AdBlocker
+        setTimeout(() => resolve(true), 1500);
+      }
+    } catch (e) {
+      console.error('Adsgram exception', e);
+      resolve(false);
     }
   });
 };
