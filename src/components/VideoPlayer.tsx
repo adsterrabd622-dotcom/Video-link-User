@@ -108,7 +108,19 @@ export default function VideoPlayer({ video, onBack }: { video: Video, onBack: (
       />
       <div className="fixed inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent pointer-events-none" />
 
-      <nav className="relative z-10 p-4 md:p-6 flex justify-between items-center bg-gradient-to-b from-slate-950 to-transparent shrink-0">
+      {/* Main Header / Logo */}
+      <header className="relative z-20 w-full bg-slate-900/50 backdrop-blur-md border-b border-white/5 px-4 md:px-6 py-4 flex items-center shrink-0">
+        <div 
+          onClick={onBack} 
+          className="flex items-center gap-2 text-indigo-400 uppercase cursor-pointer hover:opacity-80 transition-opacity"
+        >
+          <PlayCircle className="w-6 h-6 md:w-8 md:h-8 shrink-0" />
+          <span className="text-lg md:text-2xl font-black tracking-tighter text-white whitespace-nowrap">VIRAL <span className="text-indigo-500">VIDEO</span></span>
+        </div>
+      </header>
+
+      {/* Secondary Nav for Actions */}
+      <nav className="relative z-10 p-4 md:px-6 flex justify-between items-center shrink-0">
         <button onClick={onBack} className="text-slate-400 hover:text-white flex items-center gap-2 px-3 py-2 md:px-4 rounded-full hover:bg-white/10 transition-colors backdrop-blur-md">
           <X className="w-5 h-5" /> <span className="hidden sm:block">Back</span>
         </button>
