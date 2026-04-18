@@ -1,10 +1,9 @@
 export const initializeAdsgram = (blockId: string) => {
-  console.log(Initializing Adsgram with Block ID: ${blockId});
+  console.log(`Initializing Adsgram with Block ID: ${blockId}`);
 };
 
 export const showAdsgramAd = async (blockId: string): Promise<boolean> => {
   return new Promise((resolve) => {
-    // Adsgram SDK init
     const AdController = (window as any).Adsgram?.init({ blockId });
     if (AdController) {
       AdController.show()
@@ -14,8 +13,7 @@ export const showAdsgramAd = async (blockId: string): Promise<boolean> => {
           resolve(false);
         });
     } else {
-      // Fallback for simulation if SDK missing
-      console.log(Simulating Ad for Block ID: ${blockId});
+      console.log(`Simulating Ad (SDK missing) for Block ID: ${blockId}`);
       setTimeout(() => resolve(true), 1500);
     }
   });
