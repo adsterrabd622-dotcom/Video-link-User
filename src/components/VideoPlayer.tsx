@@ -4,8 +4,8 @@ import { showAdsgramAd } from '../lib/adsgram';
 import { X, Lock, PlayCircle, ShieldCheck, Share2, Check, ExternalLink } from 'lucide-react';
 
 const BOT_USERNAME = "VIRAL_LINK_VIDEO_HUB_BOT"; // আপনার বটের ইউজারনেম
-const APP_SHORT_NAME = "myapp";                // আপনার মিনি অ্যাপের শর্ট নাম
-const ADS_BLOCK_ID = "YOUR_ADSGRAM_BLOCK_ID"; 
+const APP_SHORT_NAME = "h4xor";                // আপনার মিনি অ্যাপের শর্ট নাম
+const ADS_BLOCK_ID = "int-28063"; 
 
 export default function VideoPlayer({ video, onBack }: { video: Video, onBack: () => void }) {
   const [adsWatched, setAdsWatched] = useState(0);
