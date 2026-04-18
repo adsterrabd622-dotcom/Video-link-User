@@ -8,7 +8,7 @@ import { db } from './lib/firebase';
 import { showAdsgramAd } from './lib/adsgram';
 
 // Add your Adsgram block ID here for the APP OPEN ad
-const APP_OPEN_ADS_BLOCK_ID = "YOUR_ADSGRAM_BLOCK_ID";
+const APP_OPEN_ADS_BLOCK_ID = "int-28063";
 
 const getTgUser = () => {
   const tg = (window as any).Telegram?.WebApp;
