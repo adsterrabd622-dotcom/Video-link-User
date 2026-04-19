@@ -3,7 +3,7 @@ import { Video } from '../data/videos';
 import { showAdsgramAd } from '../lib/adsgram';
 import { X, Lock, PlayCircle, ShieldCheck, ExternalLink, Share2, Check } from 'lucide-react';
 
-const ADS_BLOCK_ID = "int-28063";
+const ADS_BLOCK_ID = "int-28162";
 
 // --- TELEGRAM CONFIGURATION ---
 const BOT_USERNAME = "VIRAL_LINKVIDEO_BOT"; // আপনার বটের ইউজারনেম দিন (উদা: MyVideoBot)
