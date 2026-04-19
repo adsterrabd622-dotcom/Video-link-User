@@ -6,8 +6,8 @@ import { X, Lock, PlayCircle, ShieldCheck, ExternalLink, Share2, Check } from 'l
 const ADS_BLOCK_ID = "int-28063";
 
 // --- TELEGRAM CONFIGURATION ---
-const BOT_USERNAME = "VIRAL_LINK_VIDEO_HUB_BOT"; // আপনার বটের ইউজারনেম দিন (উদা: MyVideoBot)
-const APP_SHORT_NAME = "h4xor";         // আপনার মিনি অ্যাপের শর্ট নাম দিন (উদা: watch)
+const BOT_USERNAME = "VIRAL_LINKVIDEO_BOT"; // আপনার বটের ইউজারনেম দিন (উদা: MyVideoBot)
+const APP_SHORT_NAME = "watch";         // আপনার মিনি অ্যাপের শর্ট নাম দিন (উদা: watch)
 // ------------------------------
 
 export default function VideoPlayer({ video, onBack }: { video: Video, onBack: () => void }) {
