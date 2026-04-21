@@ -5,6 +5,9 @@ export interface Video {
   duration: string;
   description: string;
   videoUrl: string;
+  likes?: number;
+  views?: number;
+  createdAt?: string | number | any;
 }
 
 export const videos: Video[] = [
