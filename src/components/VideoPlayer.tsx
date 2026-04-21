@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Video } from '../data/videos';
 import { showAdsgramAd } from '../lib/adsgram';
 import { showMonetagAd } from '../lib/monetag';
-import { X, Lock, PlayCircle, ShieldCheck, ExternalLink, Share2, Check } from 'lucide-react';
+import { X, Lock, PlayCircle, ShieldCheck, ExternalLink, Share2, Check, Heart, Eye } from 'lucide-react';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { UserData } from '../App';
@@ -31,6 +31,11 @@ export default function VideoPlayer({
   const [loadingStatus, setLoadingStatus] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
   const [isCopied, setIsCopied] = useState(false);
+  
+  // Fake or db states for views and likes
+  const [hasLiked, setHasLiked] = useState(false);
+  const [localLikes, setLocalLikes] = useState(video.likes || Math.floor(Math.random() * 500) + 50);
+  const localViews = video.views || Math.floor(Math.random() * 5000) + 1000;
 
   const TOTAL_ADS = 5;
   const progressPercentage = (adsWatched / TOTAL_ADS) * 100;
@@ -46,6 +51,15 @@ export default function VideoPlayer({
     }
     return () => clearInterval(timer);
   }, [cooldown, loadingStatus]);
+
+  const handleLike = () => {
+    if (!hasLiked) {
+      setHasLiked(true);
+      setLocalLikes(prev => prev + 1);
+      // Optional: actually update in Firestore here if your schema allows
+      // updateDoc(doc(db, 'videos', video.id), { likes: increment(1) });
+    }
+  };
 
   const handleUnlockClick = async () => {
     if (cooldown > 0 || loadingStatus) return;
@@ -175,23 +189,48 @@ export default function VideoPlayer({
         </div>
       </nav>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-4 relative z-10">
-        <div className="w-full max-w-md bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl text-center transform transition-all duration-500 relative">
+      <div className="flex-1 flex flex-col items-center justify-start pt-6 p-4 relative z-10">
+        <div className="w-full max-w-md bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl transform transition-all duration-500 relative">
           
-          {/* Video Thumbnail in the Card */}
-          <div className="relative aspect-video w-full border-b border-white/10">
+          {/* Video Thumbnail Region */}
+          <div className="relative aspect-video w-full border-b border-white/10 group">
             <img src={video.thumbnail} alt={video.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center">
                <Lock className="w-12 h-12 text-white drop-shadow-lg mb-2" />
                <div className="text-white font-bold tracking-[0.2em] uppercase text-xs px-2 text-center drop-shadow-md">Target URL Locked</div>
             </div>
+            
+            {/* Stats Bar Overlay (Likes / Views) */}
+            <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent flex justify-between items-end">
+                <button 
+                  onClick={handleLike}
+                  className={`flex flex-col items-center gap-1 ${hasLiked ? 'text-pink-500' : 'text-white'} hover:scale-110 transition-transform`}
+                >
+                    <Heart className={`w-7 h-7 drop-shadow-md ${hasLiked ? 'fill-current' : ''}`} />
+                    <span className="text-xs font-bold text-white drop-shadow-md">{localLikes}</span>
+                </button>
+
+                <div className="flex flex-col items-center gap-1 text-white">
+                    <Eye className="w-7 h-7 drop-shadow-md" />
+                    <span className="text-xs font-bold drop-shadow-md">{localViews}</span>
+                </div>
+            </div>
           </div>
           
           <div className="p-6 md:p-8 pt-6">
-            <h2 className="text-white font-bold text-xl tracking-tight mb-2 line-clamp-2 leading-tight">{video.title}</h2>
-            <p className="text-slate-400 mb-6 text-sm leading-relaxed">
-                Unlock required. Please watch {TOTAL_ADS} short sponsored messages to reveal the target link.
-            </p>
+            <h2 className="text-white font-bold text-xl tracking-tight mb-2 line-clamp-2 leading-tight text-center">{video.title}</h2>
+            
+            {/* Bengali Usage Instruction & Income Note */}
+            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 mb-6">
+                <p className="text-indigo-100 font-semibold text-center text-sm md:text-base leading-relaxed mb-2">
+                    ভিডিওটি আনলক করতে নিচের বাটনে ক্লিক করে {TOTAL_ADS} টি অ্যাড সম্পূর্ণ দেখুন।
+                </p>
+                <div className="bg-emerald-500/20 rounded-lg p-2 text-center">
+                   <p className="text-emerald-300 text-xs font-bold uppercase tracking-wider">
+                     নোট: প্রতিটি অ্যাড দেখলে আপনার একাউন্টে ব্যালেন্স যোগ হবে!
+                   </p>
+                </div>
+            </div>
             
             {/* Progress Display */}
             <div className="mb-6">
@@ -223,7 +262,7 @@ export default function VideoPlayer({
             ) : (
                 <button 
                   onClick={handleUnlockClick}
-                  className="w-full bg-white text-slate-900 font-bold py-4 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-white/20 active:scale-95"
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-4 rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(79,70,229,0.3)] active:scale-95"
                 >
                     <PlayCircle className="fill-current w-5 h-5"/> 
                     {adsWatched === 0 ? "Watch Ad to Start" : `Watch Ad ${adsWatched + 1}`}
