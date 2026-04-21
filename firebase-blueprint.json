@@ -9,7 +9,8 @@
         "thumbnail": { "type": "string" },
         "duration": { "type": "string" },
         "description": { "type": "string" },
-        "videoUrl": { "type": "string" }
+        "videoUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "thumbnail", "duration", "description", "videoUrl"]
     }
