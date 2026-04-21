@@ -11,6 +11,8 @@ service cloud.firestore {
     
     match /videos/{videoId} {
       allow read: if true;
+      allow update: if true; // Allows updating likes and views
+      allow create: if true; // Allows Admin panel to create if using client API
     }
 
     match /users/{userId} {
