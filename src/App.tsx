@@ -142,19 +142,27 @@ export default function App() {
         snap.forEach(doc => {
           vids.push({ id: doc.id, ...doc.data() });
         });
-        
-        // First reverse them to simulate the old random order trick
-        vids.reverse();
 
-        // Then explicitly sort by createdAt if available (newest first)
+        const getTime = (val: any) => {
+          if (!val) return 0;
+          if (typeof val.toMillis === 'function') return val.toMillis(); // Firestore Timestamp
+          if (typeof val.seconds === 'number') return val.seconds * 1000; // Raw Timestamp object
+          if (typeof val === 'number') return val; // Epoch number
+          const parsed = new Date(val).getTime(); // ISO String
+          return isNaN(parsed) ? 0 : parsed;
+        };
+
+        // Explicitly sort by createdAt if available (newest first)
         vids.sort((a, b) => {
-          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          // Only sort if at least one has a createdAt field, otherwise keep them in their original order
-          if (timeA || timeB) {
-            return timeB - timeA;
+          const timeA = getTime(a.createdAt);
+          const timeB = getTime(b.createdAt);
+
+          if (timeA === 0 && timeB === 0) {
+            // Neither has a timestamp, fallback to sorting by ID so order is at least consistent
+            return b.id.localeCompare(a.id);
           }
-          return 0;
+          
+          return timeB - timeA;
         });
         
         setVideos(vids);
