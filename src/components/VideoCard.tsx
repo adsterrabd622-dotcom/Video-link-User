@@ -86,27 +86,27 @@ export default function VideoCard({ video, onClick }: { video: Video; onClick: (
               {video.title}
             </h3>
             
-            <div className="flex flex-col gap-1.5 mt-2">
-              {/* Like Option explicitly under Title */}
-              <div className="flex items-center gap-1.5 text-pink-500 font-medium text-xs">
-                 <Heart className="w-3.5 h-3.5 fill-current" />
-                 <span>Love</span>
-              </div>
-
-              {/* Uploader Name */}
-              <div className="text-xs text-slate-400 font-medium">
-                Admin
-              </div>
+            {/* Meta Info: Admin • Likes • Views • Time in one line */}
+            <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px] text-slate-400 font-medium">
+              <span>Admin</span>
               
-              {/* Views and Time */}
-              <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium">
-                <span className="flex items-center gap-1">
-                  <Eye className="w-3.5 h-3.5" /> 
-                  {video.views || 0} views
-                </span>
-                <span className="w-1 h-1 rounded-full bg-slate-700"></span>
-                <span>{timeAgo(video.createdAt)}</span>
-              </div>
+              <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+              
+              <span className="flex items-center gap-1 text-pink-500">
+                <Heart className="w-3.5 h-3.5 fill-current" />
+                {video.likes || 0}
+              </span>
+              
+              <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+              
+              <span className="flex items-center gap-1">
+                <Eye className="w-3.5 h-3.5" /> 
+                {video.views || 0}
+              </span>
+              
+              <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+              
+              <span>{timeAgo(video.createdAt)}</span>
             </div>
         </div>
 
