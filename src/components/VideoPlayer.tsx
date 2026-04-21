@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Video } from '../data/videos';
 import { showAdsgramAd } from '../lib/adsgram';
 import { showMonetagAd } from '../lib/monetag';
 import { X, Lock, PlayCircle, ShieldCheck, ExternalLink, Share2, Check, Heart, Eye } from 'lucide-react';
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { doc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { UserData } from '../App';
 
@@ -32,13 +32,51 @@ export default function VideoPlayer({
   const [cooldown, setCooldown] = useState(0);
   const [isCopied, setIsCopied] = useState(false);
   
-  // Fake or db states for views and likes
+  // Real DB states for views and likes
   const [hasLiked, setHasLiked] = useState(false);
-  const [localLikes, setLocalLikes] = useState(video.likes || Math.floor(Math.random() * 500) + 50);
-  const localViews = video.views || Math.floor(Math.random() * 5000) + 1000;
+  const [realLikes, setRealLikes] = useState(video.likes || 0);
+  const [realViews, setRealViews] = useState(video.views || 0);
+  const [showLikeToast, setShowLikeToast] = useState(false);
+  const hasIncrementedView = useRef(false);
 
   const TOTAL_ADS = 5;
   const progressPercentage = (adsWatched / TOTAL_ADS) * 100;
+
+  // Real-time Database sync for Likes and Views
+  useEffect(() => {
+    if (!video || !video.id) return;
+    
+    const videoRef = doc(db, 'videos', video.id);
+
+    // Increment view ONLY ONCE per session when this component opens
+    if (!hasIncrementedView.current) {
+      updateDoc(videoRef, { views: increment(1) }).catch(console.error);
+      hasIncrementedView.current = true;
+    }
+
+    // Listen to real-time updates for likes and views
+    const unsub = onSnapshot(videoRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        
+        // Check if someone else liked it to show notification (if it increased and we haven't clicked recently)
+        const currentLikes = data.likes || 0;
+        setRealLikes((prev) => {
+           if (currentLikes > prev && prev !== 0 && !hasLiked) {
+             // Show "Someone loved this!" toast
+             setShowLikeToast(true);
+             setTimeout(() => setShowLikeToast(false), 3000);
+           }
+           return currentLikes;
+        });
+
+        setRealViews(data.views || 0);
+      }
+    });
+
+    return () => unsub();
+  }, [video.id, hasLiked]);
+
 
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
@@ -53,11 +91,19 @@ export default function VideoPlayer({
   }, [cooldown, loadingStatus]);
 
   const handleLike = () => {
-    if (!hasLiked) {
+    if (!hasLiked && video?.id) {
       setHasLiked(true);
-      setLocalLikes(prev => prev + 1);
-      // Optional: actually update in Firestore here if your schema allows
-      // updateDoc(doc(db, 'videos', video.id), { likes: increment(1) });
+      
+      // Optimitic update UI
+      setRealLikes(prev => prev + 1);
+      
+      // Update in DB
+      const videoRef = doc(db, 'videos', video.id);
+      updateDoc(videoRef, { likes: increment(1) }).catch(console.error);
+
+      // Show personal toast
+      setShowLikeToast(true);
+      setTimeout(() => setShowLikeToast(false), 3000);
     }
   };
 
@@ -202,17 +248,25 @@ export default function VideoPlayer({
             
             {/* Stats Bar Overlay (Likes / Views) */}
             <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent flex justify-between items-end">
-                <button 
-                  onClick={handleLike}
-                  className={`flex flex-col items-center gap-1 ${hasLiked ? 'text-pink-500' : 'text-white'} hover:scale-110 transition-transform`}
-                >
-                    <Heart className={`w-7 h-7 drop-shadow-md ${hasLiked ? 'fill-current' : ''}`} />
-                    <span className="text-xs font-bold text-white drop-shadow-md">{localLikes}</span>
-                </button>
+                <div className="relative">
+                  <button 
+                    onClick={handleLike}
+                    className={`flex flex-col items-center gap-1 ${hasLiked ? 'text-pink-500' : 'text-white'} hover:scale-110 transition-transform`}
+                  >
+                      <Heart className={`w-7 h-7 drop-shadow-md ${hasLiked ? 'fill-current' : ''}`} />
+                      <span className="text-xs font-bold text-white drop-shadow-md">{realLikes}</span>
+                  </button>
+                  {/* Heart Toast overlay */}
+                  <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 pointer-events-none transition-all duration-500 flex items-center justify-center ${showLikeToast ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-50'}`}>
+                    <div className="bg-pink-500 text-white text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap shadow-lg flex items-center gap-1">
+                      <Heart className="w-3 h-3 fill-current" /> Loved!
+                    </div>
+                  </div>
+                </div>
 
                 <div className="flex flex-col items-center gap-1 text-white">
                     <Eye className="w-7 h-7 drop-shadow-md" />
-                    <span className="text-xs font-bold drop-shadow-md">{localViews}</span>
+                    <span className="text-xs font-bold drop-shadow-md">{realViews}</span>
                 </div>
             </div>
           </div>
