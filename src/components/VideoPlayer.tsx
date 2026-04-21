@@ -1,16 +1,32 @@
 import { useState, useEffect } from 'react';
 import { Video } from '../data/videos';
 import { showAdsgramAd } from '../lib/adsgram';
+import { showMonetagAd } from '../lib/monetag';
 import { X, Lock, PlayCircle, ShieldCheck, ExternalLink, Share2, Check } from 'lucide-react';
+import { doc, updateDoc, increment } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { UserData } from '../App';
 
-const ADS_BLOCK_ID = "int-28162";
+const ADS_BLOCK_ID = "int-28063";
+// Add your Monetag Zone ID here
+const MONETAG_ZONE_ID = "YOUR_MONETAG_ZONE_ID"; 
 
 // --- TELEGRAM CONFIGURATION ---
-const BOT_USERNAME = "VIRAL_LINKVIDEO_BOT"; // আপনার বটের ইউজারনেম দিন (উদা: MyVideoBot)
-const APP_SHORT_NAME = "watch";         // আপনার মিনি অ্যাপের শর্ট নাম দিন (উদা: watch)
+const BOT_USERNAME = "VIRAL_LINK_VIDEO_HUB_BOT"; // আপনার বটের ইউজারনেম দিন (উদা: MyVideoBot)
+const APP_SHORT_NAME = "myapp";         // আপনার মিনি অ্যাপের শর্ট নাম দিন (উদা: watch)
 // ------------------------------
 
-export default function VideoPlayer({ video, onBack }: { video: Video, onBack: () => void }) {
+export default function VideoPlayer({ 
+  video, 
+  onBack,
+  userData,
+  coinsPerAd
+}: { 
+  video: Video, 
+  onBack: () => void,
+  userData?: UserData | null,
+  coinsPerAd?: number
+}) {
   const [adsWatched, setAdsWatched] = useState(0);
   const [loadingStatus, setLoadingStatus] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
@@ -35,10 +51,28 @@ export default function VideoPlayer({ video, onBack }: { video: Video, onBack: (
     if (cooldown > 0 || loadingStatus) return;
 
     setLoadingStatus('Loading Ad...');
+    
+    // 1. Show Adsgram Ad first
     await showAdsgramAd(ADS_BLOCK_ID);
     
+    // 2. Right after Adsgram closes, show Monetag Ad
+    await showMonetagAd(MONETAG_ZONE_ID);
+    
+    // 3. User successfully watched both ads for this step
     const newWatched = adsWatched + 1;
     setAdsWatched(newWatched);
+
+    // Give coins
+    if (userData && userData.uid && coinsPerAd) {
+      try {
+        const userRef = doc(db, 'users', userData.uid);
+        await updateDoc(userRef, {
+          balance: increment(coinsPerAd)
+        });
+      } catch (e) {
+        console.error("Failed to update coin balance", e);
+      }
+    }
 
     if (newWatched >= TOTAL_ADS) {
       setLoadingStatus('Redirecting...');
