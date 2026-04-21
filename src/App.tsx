@@ -135,13 +135,27 @@ export default function App() {
     playOpenAd();
 
     try {
-      // Query videos but we will reverse them client side since firestore doesn't guarantee creation order without a timestamp field
+      // Fetch all videos and sort them client-side to place newest uploads at the top
+      // We do it client-side to prevent old documents missing 'createdAt' from disappearing 
       const unsub = onSnapshot(collection(db, 'videos'), (snap) => {
-        const vids: Video[] = [];
+        const vids: any[] = [];
         snap.forEach(doc => {
-          vids.push({ id: doc.id, ...doc.data() } as Video);
+          vids.push({ id: doc.id, ...doc.data() });
         });
+        
+        // First reverse them to simulate the old random order trick
         vids.reverse();
+
+        // Then explicitly sort by createdAt if available (newest first)
+        vids.sort((a, b) => {
+          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          // Only sort if at least one has a createdAt field, otherwise keep them in their original order
+          if (timeA || timeB) {
+            return timeB - timeA;
+          }
+          return 0;
+        });
         
         setVideos(vids);
         setLoading(false);
