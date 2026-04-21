@@ -2,17 +2,28 @@ import { useState, useEffect, useRef } from 'react';
 import VideoCard from './components/VideoCard';
 import VideoPlayer from './components/VideoPlayer';
 import { Video, videos as defaultVideos } from './data/videos';
-import { Search, Bell, PlayCircle, X, User } from 'lucide-react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { Search, Bell, PlayCircle, X, User as UserIcon, Home, Briefcase, CreditCard, User as UserTab } from 'lucide-react';
+import { collection, onSnapshot, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import { showAdsgramAd } from './lib/adsgram';
+import WorkTab from './components/WorkTab';
+import WithdrawTab from './components/WithdrawTab';
+import ProfileTab from './components/ProfileTab';
 
 // Add your Adsgram block ID here for the APP OPEN ad
-const APP_OPEN_ADS_BLOCK_ID = "int-28162";
+const APP_OPEN_ADS_BLOCK_ID = "int-28063";
+
+export interface UserData {
+  uid: string;
+  firstName: string;
+  username: string;
+  photoUrl: string;
+  balance: number;
+}
 
 const getTgUser = () => {
   const tg = (window as any).Telegram?.WebApp;
-  return tg?.initDataUnsafe?.user || { first_name: "User", username: "user", photo_url: "" };
+  return tg?.initDataUnsafe?.user || { id: 12345, first_name: "User", username: "user", photo_url: "" };
 };
 
 const checkStartParam = () => {
@@ -36,8 +47,61 @@ export default function App() {
   const [appOpenAdWatched, setAppOpenAdWatched] = useState(false);
   const [showingAppOpenAd, setShowingAppOpenAd] = useState(false);
   
+  // Navigation & User State
+  const [activeTab, setActiveTab] = useState<'home' | 'work' | 'withdraw' | 'profile'>('home');
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [coinsPerAd, setCoinsPerAd] = useState<number>(50); // Default to 50, fetch from DB
+  
   const hasProcessedDeepLink = useRef(false);
   const tgUser = getTgUser();
+  const userId = String(tgUser.id);
+
+  // Sync user and settings from Firestore
+  useEffect(() => {
+    const syncUser = async () => {
+      try {
+        const userRef = doc(db, 'users', userId);
+        const userSnap = await getDoc(userRef);
+        
+        let initialData: UserData;
+        if (userSnap.exists()) {
+          initialData = { uid: userId, ...userSnap.data() } as UserData;
+        } else {
+          initialData = {
+            uid: userId,
+            firstName: tgUser.first_name || '',
+            username: tgUser.username || '',
+            photoUrl: tgUser.photo_url || '',
+            balance: 0,
+          };
+          await setDoc(userRef, initialData);
+        }
+        setUserData(initialData);
+
+        // Listen for real-time balance updates
+        const unsubUser = onSnapshot(userRef, (doc) => {
+          if (doc.exists()) {
+            setUserData(prev => prev ? { ...prev, balance: doc.data()?.balance || 0 } : null);
+          }
+        });
+
+        // Also fetch app settings for coins
+        const settingsRef = doc(db, 'settings', 'app');
+        const settingsSnap = await getDoc(settingsRef);
+        if (settingsSnap.exists() && settingsSnap.data()?.coinsPerAd) {
+          setCoinsPerAd(settingsSnap.data().coinsPerAd);
+        } else {
+          // Initialize if missing
+          await setDoc(settingsRef, { coinsPerAd: 50 }, { merge: true });
+        }
+
+        return () => unsubUser();
+      } catch (err) {
+        console.error("Error syncing user:", err);
+      }
+    };
+    syncUser();
+  }, [userId, tgUser]);
 
   const handleDeepLink = (vids: Video[]) => {
     if (!hasProcessedDeepLink.current && vids.length > 0) {
@@ -113,7 +177,7 @@ export default function App() {
   }
 
   if (selectedVideo) {
-    return <VideoPlayer video={selectedVideo} onBack={() => setSelectedVideo(null)} />;
+    return <VideoPlayer video={selectedVideo} onBack={() => setSelectedVideo(null)} userData={userData} coinsPerAd={coinsPerAd} />;
   }
 
   return (
@@ -151,34 +215,34 @@ export default function App() {
           <div className="relative shrink-0">
             <div 
               onClick={() => setShowProfilePopup(!showProfilePopup)}
-              className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 border border-white/10 shadow-lg cursor-pointer flex items-center justify-center overflow-hidden transition-transform active:scale-95 hover:shadow-indigo-500/50 hover:shadow-lg"
+              className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 border border-white/10 shadow-lg cursor-pointer flex items-center justify-center overflow-hidden transition-transform active:scale-95 hover:shadow-indigo-500/50 hover:shadow-lg"
             >
               {tgUser.photo_url ? (
                 <img src={tgUser.photo_url} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <User className="w-5 h-5 text-white" />
+                <UserIcon className="w-5 h-5 text-white" />
               )}
             </div>
             
             {showProfilePopup && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowProfilePopup(false)}></div>
-                <div className="absolute right-0 top-12 w-64 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95">
+                <div className="absolute right-0 top-14 w-64 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95">
                   <div className="flex items-center gap-4 mb-4">
                      <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 overflow-hidden flex items-center justify-center shrink-0">
                         {tgUser.photo_url ? (
                           <img src={tgUser.photo_url} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
-                          <User className="w-6 h-6 text-white" />
+                          <UserIcon className="w-6 h-6 text-white" />
                         )}
                      </div>
                      <div className="overflow-hidden">
-                       <h3 className="text-white font-bold truncate">{tgUser.first_name} {tgUser.last_name || ''}</h3>
-                       <p className="text-slate-400 text-sm truncate">@{tgUser.username || 'username'}</p>
+                       <h3 className="text-white font-bold truncate">{userData?.firstName || 'User'}</h3>
+                       <p className="text-emerald-400 text-sm font-semibold mt-0.5">Balance: {userData?.balance || 0} 🪙</p>
                      </div>
                   </div>
                   <div className="bg-slate-800/80 rounded-lg p-3 text-xs text-slate-300 text-center border border-white/5">
-                     Authenticated via Telegram Mini App
+                     Authenticated via Telegram
                   </div>
                 </div>
               </>
@@ -187,38 +251,73 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Main Home Content */}
-      <main className="pt-28 px-4 md:px-10 max-w-7xl mx-auto flex-1">
-        <header className="mb-12 text-center md:text-left">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 animate-in fade-in slide-in-from-bottom-4 mb-3">
-            Discover Premium Content
-          </h1>
-          <p className="text-slate-400 md:text-lg animate-in fade-in slide-in-from-bottom-5">
-            Watch exclusive viral videos by unlocking sponsored content seamlessly.
-          </p>
-        </header>
+      {/* Main Content Area based on Tab */}
+      {activeTab === 'home' && (
+        <main className="pt-28 px-4 md:px-10 max-w-7xl mx-auto flex-1 pb-24">
+          <header className="mb-12 text-center md:text-left">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 animate-in fade-in slide-in-from-bottom-4 mb-3">
+              Discover Premium Content
+            </h1>
+            <p className="text-slate-400 md:text-lg animate-in fade-in slide-in-from-bottom-5">
+              Watch exclusive viral videos by unlocking sponsored content seamlessly.
+            </p>
+          </header>
 
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-white">
-            {searchQuery ? `Search Results for "${searchQuery}"` : "Trending Now"}
-          </h2>
-        </div>
-
-        {loading ? (
-            <div className="text-center py-20 text-indigo-400 font-medium animate-pulse">Loading premium content...</div>
-        ) : filteredVideos.length > 0 ? (
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-            {filteredVideos.map(video => (
-              <VideoCard key={video.id} video={video} onClick={() => setSelectedVideo(video)} />
-            ))}
-          </section>
-        ) : (
-          <div className="text-center py-20 text-slate-500 flex flex-col items-center animate-in fade-in zoom-in-95">
-            <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
-            <p className="text-lg">{searchQuery ? "No videos found matching your search." : "No videos available right now."}</p>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-white">
+              {searchQuery ? `Search Results for "${searchQuery}"` : "Trending Now"}
+            </h2>
           </div>
-        )}
-      </main>
+
+          {loading ? (
+              <div className="text-center py-20 text-indigo-400 font-medium animate-pulse">Loading premium content...</div>
+          ) : filteredVideos.length > 0 ? (
+            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+              {filteredVideos.map(video => (
+                <VideoCard key={video.id} video={video} onClick={() => setSelectedVideo(video)} />
+              ))}
+            </section>
+          ) : (
+            <div className="text-center py-20 text-slate-500 flex flex-col items-center animate-in fade-in zoom-in-95">
+              <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
+              <p className="text-lg">{searchQuery ? "No videos found matching your search." : "No videos available right now."}</p>
+            </div>
+          )}
+        </main>
+      )}
+
+      {activeTab === 'work' && (
+        <WorkTab userData={userData} coinsPerAd={coinsPerAd} />
+      )}
+
+      {activeTab === 'withdraw' && (
+        <WithdrawTab userData={userData} />
+      )}
+
+      {activeTab === 'profile' && (
+        <ProfileTab userData={userData} tgUser={tgUser} />
+      )}
+
+      {/* Bottom Mobile Menu */}
+      <div className="fixed bottom-0 left-0 w-full bg-slate-900 border-t border-white/10 px-6 py-3 flex justify-between items-center z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+        <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 w-16 ${activeTab === 'home' ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'}`}>
+          <Home className="w-6 h-6" />
+          <span className="text-[10px] font-medium">Home</span>
+        </button>
+        <button onClick={() => setActiveTab('work')} className={`flex flex-col items-center gap-1 w-16 ${activeTab === 'work' ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'}`}>
+          <Briefcase className="w-6 h-6" />
+          <span className="text-[10px] font-medium">Work</span>
+        </button>
+        <button onClick={() => setActiveTab('profile')} className={`flex flex-col items-center gap-1 w-16 ${activeTab === 'profile' ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'}`}>
+          <UserTab className="w-6 h-6" />
+          <span className="text-[10px] font-medium">Profile</span>
+        </button>
+        <button onClick={() => setActiveTab('withdraw')} className={`flex flex-col items-center gap-1 w-16 ${activeTab === 'withdraw' ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'}`}>
+          <CreditCard className="w-6 h-6" />
+          <span className="text-[10px] font-medium">Withdraw</span>
+        </button>
+      </div>
+
     </div>
   );
 }
