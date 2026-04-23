@@ -7,13 +7,13 @@ import { doc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { UserData } from '../App';
 
-const ADS_BLOCK_ID = "int-28063";
+const ADS_BLOCK_ID = "int-28474";
 // Add your Monetag Zone ID here
 const MONETAG_ZONE_ID = "YOUR_MONETAG_ZONE_ID"; 
 
 // --- TELEGRAM CONFIGURATION ---
-const BOT_USERNAME = "VIRAL_LINK_VIDEO_HUB_BOT"; // আপনার বটের ইউজারনেম দিন (উদা: MyVideoBot)
-const APP_SHORT_NAME = "myapp";         // আপনার মিনি অ্যাপের শর্ট নাম দিন (উদা: watch)
+const BOT_USERNAME = "ViralLinkEarning_Bot"; // আপনার বটের ইউজারনেম দিন (উদা: MyVideoBot)
+const APP_SHORT_NAME = "app";         // আপনার মিনি অ্যাপের শর্ট নাম দিন (উদা: watch)
 // ------------------------------
 
 export default function VideoPlayer({ 
