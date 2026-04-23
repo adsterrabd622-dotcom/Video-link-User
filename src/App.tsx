@@ -11,7 +11,7 @@ import WithdrawTab from './components/WithdrawTab';
 import ProfileTab from './components/ProfileTab';
 
 // Add your Adsgram block ID here for the APP OPEN ad
-const APP_OPEN_ADS_BLOCK_ID = "int-28063";
+const APP_OPEN_ADS_BLOCK_ID = "int-28474";
 
 export interface UserData {
   uid: string;
