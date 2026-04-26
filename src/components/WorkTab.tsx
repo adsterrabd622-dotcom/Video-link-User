@@ -1,5 +1,7 @@
 import { UserData } from '../App';
 import { PlayCircle, Youtube, ThumbsUp, DollarSign } from 'lucide-react';
+import { showGigaPubAd } from '../lib/gigapub';
+import { showAdexiumAd } from '../lib/adexium';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useState } from 'react';
@@ -11,7 +13,8 @@ export default function WorkTab({ userData, coinsPerAd }: { userData: UserData |
     if (loading) return;
     setLoading(true);
     try {
-      // Ads removed
+      await showGigaPubAd();
+      await showAdexiumAd();
       
       if (userData && userData.uid) {
         const userRef = doc(db, 'users', userData.uid);
