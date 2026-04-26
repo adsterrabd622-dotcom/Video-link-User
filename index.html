@@ -1,14 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Viral Video Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viral Video Platform</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-  </head>
+    <script>
+      // Intercept console.error to silence the specific Telegram WebApp warning
+      const originalConsoleError = console.error;
+      console.error = function(...args) {
+        if (typeof args[0] === 'string' && args[0].includes('CloudStorage is not supported')) {
+          return; // Ignore
+        }
+        originalConsoleError.apply(console, args);
+      };
+
+      if (window.Telegram && window.Telegram.WebApp) {
+        try {
+          if (!window.Telegram.WebApp.CloudStorage || window.Telegram.WebApp.version === '6.0' || window.Telegram.WebApp.version === '6.9' || window.Telegram.WebApp.version === '6.4') {
+             // Mock CloudStorage to prevent crashes
+             window.Telegram.WebApp.CloudStorage = {
+               setItem: (key, value, cb) => { if(cb) cb(null, true); },
+               getItem: (key, cb) => { if(cb) cb(null, null); },
+               getItems: (keys, cb) => { if(cb) cb(null, {}); },
+               removeItem: (key, cb) => { if(cb) cb(null, true); },
+               removeItems: (keys, cb) => { if(cb) cb(null, true); },
+               getKeys: (cb) => { if(cb) cb(null, []); }
+             };
+          }
+        } catch (e) {}
+      }
+    </script>
+</head>
 <body>
-<div id="root"></div>
-<script type="module" src="/src/main.tsx"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
