@@ -7,7 +7,7 @@ export const showGigaPubAd = (): Promise<void> => {
         resolve();
       }
     };
-
+             
     // Safety timeout in case the ad struggles to load
     const timeoutId = setTimeout(() => {
       console.warn("GigaPub: Ad load timeout exceeded.");
