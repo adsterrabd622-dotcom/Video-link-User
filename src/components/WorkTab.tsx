@@ -1,7 +1,5 @@
 import { UserData } from '../App';
 import { PlayCircle, Youtube, ThumbsUp, DollarSign } from 'lucide-react';
-import { showAdsgramAd } from '../lib/adsgram';
-import { showMonetagAd } from '../lib/monetag';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useState } from 'react';
@@ -13,8 +11,7 @@ export default function WorkTab({ userData, coinsPerAd }: { userData: UserData |
     if (loading) return;
     setLoading(true);
     try {
-      await showAdsgramAd("int-28063");
-      await showMonetagAd("YOUR_MONETAG_ZONE_ID");
+      // Ads removed
       
       if (userData && userData.uid) {
         const userRef = doc(db, 'users', userData.uid);
