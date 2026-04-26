@@ -4,17 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Viral Video Platform</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-      // Intercept console.error to silence the specific Telegram WebApp warning
+      // Intercept console methods to silence the specific Telegram WebApp warning
       const originalConsoleError = console.error;
       console.error = function(...args) {
-        if (typeof args[0] === 'string' && args[0].includes('CloudStorage is not supported')) {
-          return; // Ignore
-        }
+        if (typeof args[0] === 'string' && args[0].includes('CloudStorage is not supported')) return;
         originalConsoleError.apply(console, args);
       };
+      
+      const originalConsoleWarn = console.warn;
+      console.warn = function(...args) {
+        if (typeof args[0] === 'string' && args[0].includes('CloudStorage is not supported')) return;
+        originalConsoleWarn.apply(console, args);
+      };
 
+      const originalConsoleLog = console.log;
+      console.log = function(...args) {
+        if (typeof args[0] === 'string' && args[0].includes('CloudStorage is not supported')) return;
+        originalConsoleLog.apply(console, args);
+      };
+    </script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
       if (window.Telegram && window.Telegram.WebApp) {
         try {
           if (!window.Telegram.WebApp.CloudStorage || window.Telegram.WebApp.version === '6.0' || window.Telegram.WebApp.version === '6.9' || window.Telegram.WebApp.version === '6.4') {
@@ -31,6 +42,8 @@
         } catch (e) {}
       }
     </script>
+    <script src="https://ad.gigapub.tech/script?id=6429"></script>
+    <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
 </head>
 <body>
     <div id="root"></div>
