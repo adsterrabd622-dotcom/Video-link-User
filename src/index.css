@@ -1,2 +1,15 @@
 @import "tailwindcss";
 
+@layer utilities {
+  .disable-scrollbars::-webkit-scrollbar {
+    display: none;
+  }
+  .disable-scrollbars {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .py-4\.5 {
+    padding-top: 1.125rem;
+    padding-bottom: 1.125rem;
+  }
+}
