@@ -5,6 +5,7 @@ import { Video, videos as defaultVideos } from './data/videos';
 import { Search, Bell, PlayCircle, X, User as UserIcon, Home, Briefcase, CreditCard, User as UserTab } from 'lucide-react';
 import { collection, onSnapshot, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from './lib/firebase';
+import { showGigaPubAd } from './lib/gigapub';
 import WorkTab from './components/WorkTab';
 import WithdrawTab from './components/WithdrawTab';
 import ProfileTab from './components/ProfileTab';
@@ -126,7 +127,11 @@ export default function App() {
     const playOpenAd = async () => {
       if (hasProcessedAppOpen.current) return;
       hasProcessedAppOpen.current = true;
+      // Show an ad on first load
+      setShowingAppOpenAd(true);
+      await showGigaPubAd();
       setAppOpenAdWatched(true);
+      setShowingAppOpenAd(false);
     };
 
     // Trigger App Open Ad
