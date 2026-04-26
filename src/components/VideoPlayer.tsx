@@ -1,13 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Video } from '../data/videos';
-import { showAdsgramAd } from '../lib/adsgram';
-import { showMonetagAd } from '../lib/monetag';
 import { X, Lock, PlayCircle, ShieldCheck, ExternalLink, Share2, Check, Heart, Eye } from 'lucide-react';
 import { doc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { UserData } from '../App';
 
-const ADS_BLOCK_ID = "int-28474";
+const ADS_BLOCK_ID = "int-28063";
 // Add your Monetag Zone ID here
 const MONETAG_ZONE_ID = "YOUR_MONETAG_ZONE_ID"; 
 
@@ -112,11 +110,7 @@ export default function VideoPlayer({
 
     setLoadingStatus('Loading Ad...');
     
-    // 1. Show Adsgram Ad first
-    await showAdsgramAd(ADS_BLOCK_ID);
-    
-    // 2. Right after Adsgram closes, show Monetag Ad
-    await showMonetagAd(MONETAG_ZONE_ID);
+    // Removed ad watching
     
     // 3. User successfully watched both ads for this step
     const newWatched = adsWatched + 1;
