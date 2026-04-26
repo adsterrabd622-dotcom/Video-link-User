@@ -5,13 +5,12 @@ import { Video, videos as defaultVideos } from './data/videos';
 import { Search, Bell, PlayCircle, X, User as UserIcon, Home, Briefcase, CreditCard, User as UserTab } from 'lucide-react';
 import { collection, onSnapshot, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from './lib/firebase';
-import { showAdsgramAd } from './lib/adsgram';
 import WorkTab from './components/WorkTab';
 import WithdrawTab from './components/WithdrawTab';
 import ProfileTab from './components/ProfileTab';
 
 // Add your Adsgram block ID here for the APP OPEN ad
-const APP_OPEN_ADS_BLOCK_ID = "int-28474";
+const APP_OPEN_ADS_BLOCK_ID = "int-28063";
 
 export interface UserData {
   uid: string;
@@ -53,6 +52,7 @@ export default function App() {
   const [coinsPerAd, setCoinsPerAd] = useState<number>(50); // Default to 50, fetch from DB
   
   const hasProcessedDeepLink = useRef(false);
+  const hasProcessedAppOpen = useRef(false);
   const tgUser = getTgUser();
   const userId = String(tgUser.id);
 
@@ -124,11 +124,9 @@ export default function App() {
     }
     
     const playOpenAd = async () => {
-      // Show an ad on first load
-      setShowingAppOpenAd(true);
-      await showAdsgramAd(APP_OPEN_ADS_BLOCK_ID);
+      if (hasProcessedAppOpen.current) return;
+      hasProcessedAppOpen.current = true;
       setAppOpenAdWatched(true);
-      setShowingAppOpenAd(false);
     };
 
     // Trigger App Open Ad
