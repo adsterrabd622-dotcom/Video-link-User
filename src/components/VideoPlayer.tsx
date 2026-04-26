@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Video } from '../data/videos';
+import { showGigaPubAd } from '../lib/gigapub';
+import { showAdexiumAd } from '../lib/adexium';
 import { X, Lock, PlayCircle, ShieldCheck, ExternalLink, Share2, Check, Heart, Eye } from 'lucide-react';
 import { doc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -110,7 +112,11 @@ export default function VideoPlayer({
 
     setLoadingStatus('Loading Ad...');
     
-    // Removed ad watching
+    // 1. Show Giga Pub Ad first
+    await showGigaPubAd();
+    
+    // 2. Show Adexium Ad
+    await showAdexiumAd();
     
     // 3. User successfully watched both ads for this step
     const newWatched = adsWatched + 1;
