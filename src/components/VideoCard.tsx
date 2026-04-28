@@ -32,8 +32,8 @@ const timeAgo = (dateInput: any) => {
 };
 
 // --- TELEGRAM CONFIGURATION ---
-const BOT_USERNAME = "VIRAL_LINK_VIDEO_HUB_BOT"; 
-const APP_SHORT_NAME = "myapp";         
+const BOT_USERNAME = "ViralLinkEarning_Bot"; 
+const APP_SHORT_NAME = "app";         
 // ------------------------------
 
 export default function VideoCard({ video, onClick }: { video: Video; onClick: () => void; key?: string }) {
